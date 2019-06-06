@@ -2,7 +2,8 @@
 # License: MIT. See license file in root directory
 # Copyright(c) JetsonHacks (2017-2019)
 
-OPENCV_VERSION=3.4.1
+#OPENCV_VERSION=3.4.2
+OPENCV_VERSION=4.1.0
 # Jetson Nano
 ARCH_BIN=5.3
 INSTALL_DIR=/usr/local
@@ -12,6 +13,7 @@ INSTALL_DIR=/usr/local
 # Make sure that you set this to YES
 # Value should be YES or NO
 DOWNLOAD_OPENCV_EXTRAS=NO
+DOWNLOAD_OPENCV_CONTRIB=YES
 # Source code directory
 OPENCV_SOURCE_DIR=$HOME
 WHEREAMI=$PWD
@@ -20,7 +22,7 @@ CLEANUP=true
 
 function usage
 {
-    echo "usage: ./buildOpenCVTX1.sh [[-s sourcedir ] | [-h]]"
+    echo "usage: ./buildOpenCV.sh [[-s sourcedir ] | [-h]]"
     echo "-s | --sourcedir   Directory in which to place the opencv sources (default $HOME)"
     echo "-i | --installdir  Directory in which to install opencv libraries (default /usr/local)"
     echo "-h | --help  This message"
@@ -60,13 +62,17 @@ if [ $DOWNLOAD_OPENCV_EXTRAS == "YES" ] ; then
  echo "Also installing opencv_extras"
 fi
 
+if [ $DOWNLOAD_OPENCV_CONTRIB == "YES" ] ; then
+ echo "Also installing opencv_contrib"
+fi
+
 # Repository setup
 sudo apt-add-repository universe
-sudo apt-get update
+sudo apt update
 
 # Download dependencies for the desired configuration
 cd $WHEREAMI
-sudo apt-get install -y \
+sudo apt install -y \
     cmake \
     libavcodec-dev \
     libavformat-dev \
@@ -94,12 +100,12 @@ cd /usr/local/cuda/include
 sudo patch -N cuda_gl_interop.h $WHEREAMI'/patches/OpenGLHeader.patch' 
 
 # Python 2.7
-sudo apt-get install -y python-dev python-numpy python-py python-pytest
+sudo apt install -y python-dev python-numpy python-py python-pytest
 # Python 3.6
-sudo apt-get install -y python3-dev python3-numpy python3-py python3-pytest
+sudo apt install -y python3-dev python3-numpy python3-py python3-pytest
 
 # GStreamer support
-sudo apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev 
+sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev 
 
 cd $OPENCV_SOURCE_DIR
 git clone https://github.com/opencv/opencv.git
@@ -112,6 +118,7 @@ if [ $OPENCV_VERSION = 3.4.1 ] ; then
   git cherry-pick 549b5df
 fi
 
+OPENCV_EXTRAS_OPTIONS=
 if [ $DOWNLOAD_OPENCV_EXTRAS == "YES" ] ; then
  echo "Installing opencv_extras"
  # This is for the test data
@@ -119,6 +126,18 @@ if [ $DOWNLOAD_OPENCV_EXTRAS == "YES" ] ; then
  git clone https://github.com/opencv/opencv_extra.git
  cd opencv_extra
  git checkout -b v${OPENCV_VERSION} ${OPENCV_VERSION}
+ OPENCV_EXTRAS_OPTIONS="-D INSTALL_TESTS=ON -D OPENCV_TEST_DATA_PATH=$OPENCV_SOURCE_DIR/opencv_extra/testdata -D INSTALL_C_EXAMPLES=ON -D INSTALL_PYTHON_EXAMPLES=ON"
+fi
+
+OPENCV_CONTRIB_OPTIONS=
+if [ $DOWNLOAD_OPENCV_CONTRIB == "YES" ] ; then
+ echo "Installing opencv_contrib"
+ # This is for the test data
+ cd $OPENCV_SOURCE_DIR
+ git clone https://github.com/opencv/opencv_contrib.git
+ cd opencv_contrib
+ git checkout -b v${OPENCV_VERSION} ${OPENCV_VERSION}
+ OPENCV_CONTRIB_OPTIONS="-D OPENCV_EXTRA_MODULES_PATH=$OPENCV_SOURCE_DIR/opencv_contrib/modules"
 fi
 
 cd $OPENCV_SOURCE_DIR/opencv
@@ -151,6 +170,8 @@ time cmake -D CMAKE_BUILD_TYPE=RELEASE \
       -D WITH_GSTREAMER_0_10=OFF \
       -D WITH_QT=ON \
       -D WITH_OPENGL=ON \
+	  ${OPENCV_EXTRAS_OPTIONS} \
+	  ${OPENCV_CONTRIB_OPTIONS} \
       -D BUILD_opencv_python2=ON \
       -D BUILD_opencv_python3=ON \
       ../
