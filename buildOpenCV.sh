@@ -2,8 +2,8 @@
 # License: MIT. See license file in root directory
 # Copyright(c) JetsonHacks (2017-2019)
 
-#OPENCV_VERSION=3.4.2
-OPENCV_VERSION=4.1.0
+OPENCV_VERSION=3.4.6
+#OPENCV_VERSION=4.1.0
 # Jetson Nano
 ARCH_BIN=5.3
 INSTALL_DIR=/usr/local
@@ -168,10 +168,9 @@ time cmake -D CMAKE_BUILD_TYPE=RELEASE \
       -D WITH_LIBV4L=ON \
       -D WITH_GSTREAMER=ON \
       -D WITH_GSTREAMER_0_10=OFF \
-      -D WITH_QT=ON \
       -D WITH_OPENGL=ON \
-	  ${OPENCV_EXTRAS_OPTIONS} \
-	  ${OPENCV_CONTRIB_OPTIONS} \
+      ${OPENCV_EXTRAS_OPTIONS} \
+      ${OPENCV_CONTRIB_OPTIONS} \
       -D BUILD_opencv_python2=ON \
       -D BUILD_opencv_python3=ON \
       ../
